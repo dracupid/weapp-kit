@@ -1,0 +1,20 @@
+{
+  "name": "weapp-kit",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "standard src/*.js --fix && rollup src/index.js --format es --output dist/weapp-kit.js"
+  },
+  "author": "dracupid <dracupid@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "rollup": "^0.49.2",
+    "standard": "^10.0.3"
+  },
+  "standard": {
+    "globals": [
+      "wx"
+    ]
+  }
+}
