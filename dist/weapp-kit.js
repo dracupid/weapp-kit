@@ -38,6 +38,8 @@ function resetOnce (fun) {
 
 function noop () {}
 
+function pass (res) { return res }
+
 function noThrow (fun) {
   return (...args) => {
     try {
@@ -267,7 +269,8 @@ const MODE = {
   cached: 'cached',
   storage: 'storage',
   append: 'append',
-  prepend: 'prepend'
+  prepend: 'prepend',
+  remove: 'remove'
 };
 
 class DataLoader {
@@ -383,7 +386,7 @@ class DataLoader {
 
 class ListLoader extends DataLoader {
   /**
-   * @param {function} listLoader 列表加载器。传入参数(lastItem, curLength)，返回Object {data, hasMore}
+   * @param {function} listLoader 列表加载器。传入参数(lastItem, curLength)，返回Object {data, ended}
    * @param {object} opt
    * @option {number=-1} storageLimit 列表存储长度限制。<0 为不限制
    * @option {function} listCleaner 列表数据清理函数
@@ -397,6 +400,7 @@ class ListLoader extends DataLoader {
     }, opt);
 
     this.logger = getLogger('@ListLoader');
+    this.ended = false;
   }
 
   reset () {
@@ -408,10 +412,17 @@ class ListLoader extends DataLoader {
   }
 
   _doLoadData (mode = MODE.append) {
+    if (this.ended) {
+      this.logger.info('load ended.');
+      return Promise.resolve()
+    }
     return this.dataLoader(this.data[this.data.length - 1], this.data.length)
-      .then((typeof this.opt.listCleaner === 'function') ? this.opt.listCleaner : noop)
-      .then((data = []) => {
-        this.emitter.emit('newData', {data});
+      .then(({data = [], ended = false}) => {
+        if (typeof this.opt.listCleaner === 'function') {
+          data = this.opt.listCleaner(data);
+        }
+        this.ended = data.length === 0 ? true : ended;
+        this.emitter.emit('newData', {data, ended});
         switch (mode) {
           case MODE.refresh:
             this.data = data;
@@ -425,7 +436,7 @@ class ListLoader extends DataLoader {
         this._save(this.opt.storageLimit < 0
           ? this.data
           : this.data.slice(0, this.opt.storageLimit));
-        this.emitter.emit('data', {data: this.data, mode});
+        this.emitter.emit('data', {data: this.data, mode, ended: this.ended});
       })
   }
 
@@ -434,11 +445,18 @@ class ListLoader extends DataLoader {
   }
 
   prepend () {
+    this.ended = false;
     return this._loadData(MODE.prepend)
   }
 
   refresh () {
+    this.ended = false;
     return this._loadData(MODE.refresh)
+  }
+
+  remove (index) {
+    this.data.splice(index, 1);
+    this.emitter.emit('data', {data: this.data, mode: MODE.remove, ended: this.ended});
   }
 }
 
@@ -544,4 +562,4 @@ function showInfo (title = '提示', content = '无内容', opts = {}) {
  * @link https://github.com/dracupid/weapp-kit
  */
 
-export { plainClone, once, resetOnce, noop, noThrow, paddingLeft, formatDateTime, sleep, SingleCache, DEFAULT_AVATAR, createQuery, Emitter, emit, on, DataLoader, ListLoader, Lock, requireLock, waitLock, releaseLock, getLogger, wxPromisify, callAsPromise, responseFilter, jsonPResponseFilter, request, showInfo };
+export { plainClone, once, resetOnce, noop, pass, noThrow, paddingLeft, formatDateTime, sleep, SingleCache, DEFAULT_AVATAR, createQuery, Emitter, emit, on, DataLoader, ListLoader, Lock, requireLock, waitLock, releaseLock, getLogger, wxPromisify, callAsPromise, responseFilter, jsonPResponseFilter, request, showInfo };

@@ -38,6 +38,8 @@ export function resetOnce (fun) {
 
 export function noop () {}
 
+export function pass (res) { return res }
+
 export function noThrow (fun) {
   return (...args) => {
     try {
