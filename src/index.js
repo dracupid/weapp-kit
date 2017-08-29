@@ -1,8 +1,3 @@
-/**
- * @author Zhao Jingchen
- * @link https://github.com/dracupid/weapp-kit
- */
-
 export * from './base'
 export * from './cache'
 export * from './const'

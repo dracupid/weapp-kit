@@ -1,5 +1,6 @@
 /**
  * @author Zhao Jingchen
+ * @license MIT
  * @link https://github.com/dracupid/weapp-kit
  */
 
@@ -556,10 +557,5 @@ function showInfo (title = '提示', content = '无内容', opts = {}) {
     confirmText
   });
 }
-
-/**
- * @author Zhao Jingchen
- * @link https://github.com/dracupid/weapp-kit
- */
 
 export { plainClone, once, resetOnce, noop, pass, noThrow, paddingLeft, formatDateTime, sleep, SingleCache, DEFAULT_AVATAR, createQuery, Emitter, emit, on, DataLoader, ListLoader, Lock, requireLock, waitLock, releaseLock, getLogger, wxPromisify, callAsPromise, responseFilter, jsonPResponseFilter, request, showInfo };

@@ -1,8 +1,3 @@
-/**
- * @author Zhao Jingchen
- * @link https://github.com/dracupid/weapp-kit
- */
-
 export function plainClone (obj) {
   try {
     return JSON.parse(JSON.stringify(obj))
