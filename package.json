@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "standard src/*.js --fix && rollup src/index.js --format es --output dist/weapp-kit.js"
+    "build": "standard src/*.js --fix && rollup src/index.js --output.format es --output.file dist/weapp-kit.js"
   },
   "author": "dracupid <dracupid@gmail.com>",
   "license": "MIT",
