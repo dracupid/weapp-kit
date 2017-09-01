@@ -136,7 +136,8 @@ export class ListLoader extends DataLoader {
 
     this.opt = Object.assign(this.opt, {
       storageLimit: -1,
-      listCleaner: null
+      listCleaner: null,
+      infinite: false
     }, opt)
 
     this.logger = getLogger('@ListLoader')
@@ -152,16 +153,25 @@ export class ListLoader extends DataLoader {
   }
 
   _doLoadData (mode = MODE.append) {
+    if (mode === MODE.refresh) {
+      this.ended = false
+      this.data = []
+    } else if (mode === MODE.prepend) {
+      this.ended = false
+    }
+
     if (this.ended) {
       this.logger.info('load ended.')
       return Promise.resolve()
     }
+
     return this.dataLoader(this.data[this.data.length - 1], this.data.length)
       .then(({data = [], ended = false}) => {
+        this.ended = data.length === 0 ? true : ended
+        if (this.opt.infinite) this.ended = false
         if (typeof this.opt.listCleaner === 'function') {
           data = this.opt.listCleaner(data)
         }
-        this.ended = data.length === 0 ? true : ended
         this.emitter.emit('newData', {data, ended})
         switch (mode) {
           case MODE.refresh:
@@ -185,12 +195,10 @@ export class ListLoader extends DataLoader {
   }
 
   prepend () {
-    this.ended = false
     return this._loadData(MODE.prepend)
   }
 
   refresh () {
-    this.ended = false
     return this._loadData(MODE.refresh)
   }
 
