@@ -87,6 +87,7 @@ export class DataLoader {
 
   // @overwrite
   _doLoadData () {
+    this.emitter.emit('beforeLoad')
     return this.dataLoader()
       .then((data = []) => {
         this.emitter.emit('newData', {data})
@@ -98,7 +99,6 @@ export class DataLoader {
 
   _loadData (...args) {
     if (!this.lock || lock.requireLock(this.lock)) {
-      this.emitter.emit('beforeLoad')
       return this._doLoadData(...args)
         .then(() => {
           this.lock && lock.releaseLock(this.lock)
@@ -165,6 +165,7 @@ export class ListLoader extends DataLoader {
       return Promise.resolve()
     }
 
+    this.emitter.emit('beforeLoad')
     return this.dataLoader(this.data[this.data.length - 1], this.data.length)
       .then(({data = [], ended = false}) => {
         this.ended = data.length === 0 ? true : ended
