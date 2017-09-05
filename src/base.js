@@ -57,10 +57,22 @@ export function paddingLeft (str = '', length, padding) {
 
 const _p = (str) => paddingLeft(str, 2, '0')
 
-export function formatDateTime (timestamp) {
+const curYear = (new Date()).getFullYear()
+
+export function formatDateTime (timestamp, opts = {}) {
   if (!timestamp) return
   const t = (timestamp instanceof Date) ? timestamp : new Date(parseInt(timestamp))
-  return `${t.getFullYear()}-${_p(t.getMonth() + 1)}-${_p(t.getDate())} ${_p(t.getHours())}:${_p(t.getMinutes())}:${_p(t.getSeconds())}`
+  const {smart = true, second = false} = opts
+  let ret
+  if (smart && t.getFullYear() === curYear) {
+    ret = `${_p(t.getMonth() + 1)}/${_p(t.getDate())} ${_p(t.getHours())}:${_p(t.getMinutes())}`
+  } else {
+    ret = `${t.getFullYear()}/${_p(t.getMonth() + 1)}/${_p(t.getDate())} ${_p(t.getHours())}:${_p(t.getMinutes())}`
+  }
+  if (second) {
+    ret += `:${_p(t.getSeconds())}`
+  }
+  return ret
 }
 
 export function sleep (time = 5000, promise = Promise.resolve()) {
