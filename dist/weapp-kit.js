@@ -472,7 +472,7 @@ class ListLoader extends DataLoader {
 
     this.emitter.emit('beforeLoad');
     return this.dataLoader(this.data[this.data.length - 1], this.data.length)
-      .then(({data = [], ended = false}) => {
+      .then(({data = [], ended = false, args = {}}) => {
         this.ended = data.length === 0 ? true : ended;
         if (this.opt.infinite) this.ended = false;
         if (typeof this.opt.listCleaner === 'function') {
@@ -492,7 +492,7 @@ class ListLoader extends DataLoader {
         this._save(this.opt.storageLimit < 0
           ? this.data
           : this.data.slice(0, this.opt.storageLimit));
-        this.emitter.emit('data', {data: this.data, mode, ended: this.ended});
+        this.emitter.emit('data', {data: this.data, mode, ended: this.ended, args});
       })
   }
 
