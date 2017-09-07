@@ -4,6 +4,11 @@
  * @link https://github.com/dracupid/weapp-kit
  */
 
+/**
+ * Clone an object using JSON
+ * @param  {Object} obj object to clone
+ * @return {object}     cloned object
+ */
 function plainClone (obj) {
   try {
     return JSON.parse(JSON.stringify(obj))
@@ -12,6 +17,11 @@ function plainClone (obj) {
   }
 }
 
+/**
+ * execute a function only once
+ * @param  {function} fun function
+ * @return {any}   return value
+ */
 function once (fun) {
   let value;
   let called = false;
@@ -29,6 +39,10 @@ function once (fun) {
   return ret
 }
 
+/**
+ * clean onced function
+ * @param  {object} fun return value of onced function
+ */
 function resetOnce (fun) {
   if (typeof fun.__resetOnce__ === 'function') {
     fun.__resetOnce__();
@@ -37,8 +51,14 @@ function resetOnce (fun) {
   }
 }
 
+/**
+ * a function that do nothing
+ */
 function noop () {}
 
+/**
+ * a function that return its first argument
+ */
 function pass (res) { return res }
 
 function noThrow (fun) {
@@ -65,6 +85,12 @@ const _p = (str) => paddingLeft(str, 2, '0');
 
 const curYear = (new Date()).getFullYear();
 
+/**
+ * format DateTime
+ * @param  {Date/Number} timestamp timestamp
+ * @param  {Object} opts  format options
+ * @return {String}         formatted DateTime
+ */
 function formatDateTime (timestamp, opts = {}) {
   if (!timestamp) return
   const t = (timestamp instanceof Date) ? timestamp : new Date(parseInt(timestamp));
@@ -81,6 +107,12 @@ function formatDateTime (timestamp, opts = {}) {
   return ret
 }
 
+/**
+ * make a Promise sleeping
+ * @param {number} time sleep ms
+ * @param {Promise} promise
+ * @returns {Promise} wrapped Promise
+ */
 function sleep (time = 5000, promise = Promise.resolve()) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
