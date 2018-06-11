@@ -9,8 +9,8 @@
   "author": "dracupid <dracupid@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "rollup": "^0.49.2",
-    "standard": "^10.0.3"
+    "rollup": "^0.60.2",
+    "standard": "^11.0.1"
   },
   "standard": {
     "globals": [
