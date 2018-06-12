@@ -114,3 +114,15 @@ export function sleep (time = 5000, promise = Promise.resolve()) {
     }, time)
   })
 }
+
+export function cached (fun) {
+  let cache = {}
+  return function () {
+    const key = JSON.stringify(arguments)
+    if (!cache[key]) {
+      cache[key] = fun.apply(this, arguments)
+    }
+
+    return cache[key]
+  }
+}

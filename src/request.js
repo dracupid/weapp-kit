@@ -15,7 +15,7 @@ export function responseFilter (res) {
         data = JSON.parse(data)
       } catch (e) { }
     }
-    resLogger.info(plainClone(data))
+    resLogger.debug(plainClone(data))
     return Promise.resolve(data)
   } else {
     resLogger.error(statusCode, plainClone(data))
@@ -33,21 +33,43 @@ export function jsonPResponseFilter (res) {
   return responseFilter(res)
 }
 
+/**
+ * send request
+ *
+ * @param {string} url request url
+ * @param {object} data request data
+ * @param {object} [opt={}] request options
+ * @property {string} [method='GET'] request method
+ * @property {function} onReturn callback for use wx.request return value
+ * @property {boolean} [jsonP=false] jsonP request?
+ * @property {boolean} [logTime=false] log time
+ * @property {number} [retry=0] retryTimes
+ * @returns {Promise} promise
+ */
 export function request (url, data, opt = {}) {
   const id = requestId++
   const {method = 'GET', onReturn, jsonP, logTime} = opt
 
-  reqLogger.info(id, url, plainClone(data))
+  reqLogger.debug(id, url, plainClone(data))
   const timeStart = Date.now()
   return wxRequest({url, data, method}, onReturn)
     .then((res) => {
-      resLogger[logTime ? 'log' : 'info'](id, `use ${(Date.now() - timeStart) / 1000}s`)
+      resLogger[logTime ? 'log' : 'debug'](id, `use ${(Date.now() - timeStart) / 1000}s`)
       return res
     })
     .catch((e) => {
-      resLogger[logTime ? 'log' : 'info'](id, `use ${(Date.now() - timeStart) / 1000}s`)
+      resLogger[logTime ? 'log' : 'debug'](id, `use ${(Date.now() - timeStart) / 1000}s`)
       resLogger.error(e)
       throw e
     })
     .then(jsonP ? jsonPResponseFilter : responseFilter)
+    .catch((e) => {
+      if (opt.retry > 0) {
+        opt.retry -= 1
+        resLogger.warn(`retry request (${opt.retry} remains)`, e)
+        return request(url, data, opt)
+      } else {
+        throw e
+      }
+    })
 }
