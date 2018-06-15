@@ -115,14 +115,45 @@ export function sleep (time = 5000, promise = Promise.resolve()) {
   })
 }
 
-export function cached (fun) {
+function cacheReturn (value) {
+  if (value.isPromise) {
+    return Promise.resolve(value.value)
+  } else {
+    return value.value
+  }
+}
+
+export function cached (fun, storagePrefix = '') {
   let cache = {}
   return function () {
     const key = JSON.stringify(arguments)
-    if (!cache[key]) {
-      cache[key] = fun.apply(this, arguments)
+    if (!cache[key]) { // 未内存缓存
+      let stored
+      try {
+        storagePrefix && (stored = wx.getStorageSync(storagePrefix + key))
+      } catch (e) {
+        console.error(e)
+      }
+      if (stored) { // 已本地缓存
+        cache[key] = stored
+        return cacheReturn(cache[key])
+      } else {
+        const value = fun.apply(this, arguments)
+        if (value instanceof Promise) {
+          value.then((value) => {
+            cache[key] = {value, isPromise: true}
+            storagePrefix && wx.setStorage({key: storagePrefix + key, data: cache[key]})
+          }, () => {})
+        } else {
+          cache[key] = {value, isPromise: false}
+          try {
+            storagePrefix && wx.setStorage({key: storagePrefix + key, data: cache[key]})
+          } catch(e) {}
+        }
+        return value
+      }
+    } else { // 已有缓存
+      return cacheReturn(cache[key])
     }
-
-    return cache[key]
   }
 }
