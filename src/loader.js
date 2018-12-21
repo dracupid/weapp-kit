@@ -81,7 +81,7 @@ export class DataLoader {
     if (!this.storage) return undefined
     const data = this.storage.get()
     if (this._isValidData(data)) {
-      this.emitter.emit('data', {data, mode: MODE.storage})
+      this.emitter.emit('data', { data, mode: MODE.storage })
     }
   }
 
@@ -90,10 +90,10 @@ export class DataLoader {
     this.emitter.emit('beforeLoad')
     return this.dataLoader()
       .then((data = []) => {
-        this.emitter.emit('newData', {data})
+        this.emitter.emit('newData', { data })
         this._save(data)
         this.data = data
-        this.emitter.emit('data', {data, mode: MODE.refresh})
+        this.emitter.emit('data', { data, mode: MODE.refresh })
       })
   }
 
@@ -116,7 +116,7 @@ export class DataLoader {
     this._restore()
 
     if (this._isValidData(this.data)) {
-      this.emitter.emit('data', {data: this.data, mode: MODE.cached})
+      this.emitter.emit('data', { data: this.data, mode: MODE.cached })
       return Promise.resolve()
     } else {
       return this._loadData()
@@ -167,13 +167,13 @@ export class ListLoader extends DataLoader {
 
     this.emitter.emit('beforeLoad')
     return this.dataLoader(this.data[this.data.length - 1], this.data.length)
-      .then(({data = [], ended = false, args = {}}) => {
+      .then(({ data = [], ended = false, args = {} }) => {
         this.ended = data.length === 0 ? true : ended
         if (this.opt.infinite) this.ended = false
         if (typeof this.opt.listCleaner === 'function') {
           data = this.opt.listCleaner(data)
         }
-        this.emitter.emit('newData', {data, ended})
+        this.emitter.emit('newData', { data, ended })
         switch (mode) {
           case MODE.refresh:
             this.data = data
@@ -187,7 +187,7 @@ export class ListLoader extends DataLoader {
         this._save(this.opt.storageLimit < 0
           ? this.data
           : this.data.slice(0, this.opt.storageLimit))
-        this.emitter.emit('data', {data: this.data, mode, ended: this.ended, args})
+        this.emitter.emit('data', { data: this.data, mode, ended: this.ended, args })
       })
   }
 
@@ -205,6 +205,6 @@ export class ListLoader extends DataLoader {
 
   remove (index) {
     this.data.splice(index, 1)
-    this.emitter.emit('data', {data: this.data, mode: MODE.remove, ended: this.ended})
+    this.emitter.emit('data', { data: this.data, mode: MODE.remove, ended: this.ended })
   }
 }

@@ -94,7 +94,7 @@ const curYear = (new Date()).getFullYear();
 function formatDateTime (timestamp, opts = {}) {
   if (!timestamp) return
   const t = (timestamp instanceof Date) ? timestamp : new Date(parseInt(timestamp));
-  const {smart = true, second = false} = opts;
+  const { smart = true, second = false } = opts;
   let ret;
   if (smart && t.getFullYear() === curYear) {
     ret = `${_p(t.getMonth() + 1)}/${_p(t.getDate())} ${_p(t.getHours())}:${_p(t.getMinutes())}`;
@@ -129,10 +129,15 @@ function cacheReturn (value) {
   }
 }
 
-function cached (fun, storagePrefix = '') {
+function cached (fun, opts = {}) {
+  let { storagePrefix, limit } = opts;
+  storagePrefix = storagePrefix || '';
+  limit = typeof limit === 'undefined' ? -1 : limit;
+
   let cache = {};
-  return function () {
-    const key = JSON.stringify(arguments);
+  return function (...args) {
+    if (limit >= 0) args = args.slice(0, limit);
+    const key = JSON.stringify(args);
     if (!cache[key]) { // 未内存缓存
       let stored;
       try {
@@ -146,13 +151,16 @@ function cached (fun, storagePrefix = '') {
       } else {
         const value = fun.apply(this, arguments);
         if (value instanceof Promise) {
+          cache[key] = { value, isPromise: false }; // 先内存缓存
           value.then((value) => {
-            cache[key] = {value, isPromise: true};
-            storagePrefix && wx.setStorage({key: storagePrefix + key, data: cache[key]});
-          });
+            cache[key] = { value, isPromise: true };
+            storagePrefix && wx.setStorage({ key: storagePrefix + key, data: cache[key] });
+          }, () => {});
         } else {
-          cache[key] = {value, isPromise: false};
-          storagePrefix && wx.setStorage({key: storagePrefix + key, data: cache[key]});
+          cache[key] = { value, isPromise: false };
+          try {
+            storagePrefix && wx.setStorage({ key: storagePrefix + key, data: cache[key] });
+          } catch (e) {}
         }
         return value
       }
@@ -222,7 +230,7 @@ function createQuery (selectQuery) {
   return {
     getElementSize (query) {
       return new Promise((resolve) => {
-        selectQuery.select(query).fields({size: true}, (res) => {
+        selectQuery.select(query).fields({ size: true }, (res) => {
           resolve(res);
         }).exec();
       })
@@ -427,7 +435,7 @@ class DataLoader {
     if (!this.storage) return undefined
     const data = this.storage.get();
     if (this._isValidData(data)) {
-      this.emitter.emit('data', {data, mode: MODE.storage});
+      this.emitter.emit('data', { data, mode: MODE.storage });
     }
   }
 
@@ -436,10 +444,10 @@ class DataLoader {
     this.emitter.emit('beforeLoad');
     return this.dataLoader()
       .then((data = []) => {
-        this.emitter.emit('newData', {data});
+        this.emitter.emit('newData', { data });
         this._save(data);
         this.data = data;
-        this.emitter.emit('data', {data, mode: MODE.refresh});
+        this.emitter.emit('data', { data, mode: MODE.refresh });
       })
   }
 
@@ -462,7 +470,7 @@ class DataLoader {
     this._restore();
 
     if (this._isValidData(this.data)) {
-      this.emitter.emit('data', {data: this.data, mode: MODE.cached});
+      this.emitter.emit('data', { data: this.data, mode: MODE.cached });
       return Promise.resolve()
     } else {
       return this._loadData()
@@ -513,13 +521,13 @@ class ListLoader extends DataLoader {
 
     this.emitter.emit('beforeLoad');
     return this.dataLoader(this.data[this.data.length - 1], this.data.length)
-      .then(({data = [], ended = false, args = {}}) => {
+      .then(({ data = [], ended = false, args = {} }) => {
         this.ended = data.length === 0 ? true : ended;
         if (this.opt.infinite) this.ended = false;
         if (typeof this.opt.listCleaner === 'function') {
           data = this.opt.listCleaner(data);
         }
-        this.emitter.emit('newData', {data, ended});
+        this.emitter.emit('newData', { data, ended });
         switch (mode) {
           case MODE.refresh:
             this.data = data;
@@ -533,7 +541,7 @@ class ListLoader extends DataLoader {
         this._save(this.opt.storageLimit < 0
           ? this.data
           : this.data.slice(0, this.opt.storageLimit));
-        this.emitter.emit('data', {data: this.data, mode, ended: this.ended, args});
+        this.emitter.emit('data', { data: this.data, mode, ended: this.ended, args });
       })
   }
 
@@ -551,7 +559,7 @@ class ListLoader extends DataLoader {
 
   remove (index) {
     this.data.splice(index, 1);
-    this.emitter.emit('data', {data: this.data, mode: MODE.remove, ended: this.ended});
+    this.emitter.emit('data', { data: this.data, mode: MODE.remove, ended: this.ended });
   }
 }
 
@@ -598,7 +606,7 @@ const resLogger = getLogger('@res');
 let requestId = 0;
 
 function responseFilter (res) {
-  let {statusCode, data} = res;
+  let { statusCode, data } = res;
   if (statusCode >= 200 && statusCode < 400) {
     if (typeof data === 'string') {
       try {
@@ -638,11 +646,11 @@ function jsonPResponseFilter (res) {
  */
 function request (url, data, opt = {}) {
   const id = requestId++;
-  const {method = 'GET', onReturn, jsonP, logTime} = opt;
+  const { method = 'GET', onReturn, jsonP, logTime } = opt;
 
   reqLogger.debug(id, url, plainClone(data));
   const timeStart = Date.now();
-  return wxRequest({url, data, method}, onReturn)
+  return wxRequest({ url, data, method }, onReturn)
     .then((res) => {
       resLogger[logTime ? 'log' : 'debug'](id, `use ${(Date.now() - timeStart) / 1000}s`);
       return res
@@ -665,7 +673,7 @@ function request (url, data, opt = {}) {
 }
 
 function showInfo (title = '提示', content = '无内容', opts = {}) {
-  const {confirmText = '好的'} = opts;
+  const { confirmText = '好的' } = opts;
   wx.showModal({
     title,
     content,

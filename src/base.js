@@ -88,7 +88,7 @@ const curYear = (new Date()).getFullYear()
 export function formatDateTime (timestamp, opts = {}) {
   if (!timestamp) return
   const t = (timestamp instanceof Date) ? timestamp : new Date(parseInt(timestamp))
-  const {smart = true, second = false} = opts
+  const { smart = true, second = false } = opts
   let ret
   if (smart && t.getFullYear() === curYear) {
     ret = `${_p(t.getMonth() + 1)}/${_p(t.getDate())} ${_p(t.getHours())}:${_p(t.getMinutes())}`
@@ -123,10 +123,15 @@ function cacheReturn (value) {
   }
 }
 
-export function cached (fun, storagePrefix = '') {
+export function cached (fun, opts = {}) {
+  let { storagePrefix, limit } = opts
+  storagePrefix = storagePrefix || ''
+  limit = typeof limit === 'undefined' ? -1 : limit
+
   let cache = {}
-  return function () {
-    const key = JSON.stringify(arguments)
+  return function (...args) {
+    if (limit >= 0) args = args.slice(0, limit)
+    const key = JSON.stringify(args)
     if (!cache[key]) { // 未内存缓存
       let stored
       try {
@@ -140,15 +145,16 @@ export function cached (fun, storagePrefix = '') {
       } else {
         const value = fun.apply(this, arguments)
         if (value instanceof Promise) {
+          cache[key] = { value, isPromise: false } // 先内存缓存
           value.then((value) => {
-            cache[key] = {value, isPromise: true}
-            storagePrefix && wx.setStorage({key: storagePrefix + key, data: cache[key]})
+            cache[key] = { value, isPromise: true }
+            storagePrefix && wx.setStorage({ key: storagePrefix + key, data: cache[key] })
           }, () => {})
         } else {
-          cache[key] = {value, isPromise: false}
+          cache[key] = { value, isPromise: false }
           try {
-            storagePrefix && wx.setStorage({key: storagePrefix + key, data: cache[key]})
-          } catch(e) {}
+            storagePrefix && wx.setStorage({ key: storagePrefix + key, data: cache[key] })
+          } catch (e) {}
         }
         return value
       }

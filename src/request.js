@@ -8,7 +8,7 @@ const resLogger = getLogger('@res')
 let requestId = 0
 
 export function responseFilter (res) {
-  let {statusCode, data} = res
+  let { statusCode, data } = res
   if (statusCode >= 200 && statusCode < 400) {
     if (typeof data === 'string') {
       try {
@@ -48,11 +48,11 @@ export function jsonPResponseFilter (res) {
  */
 export function request (url, data, opt = {}) {
   const id = requestId++
-  const {method = 'GET', onReturn, jsonP, logTime} = opt
+  const { method = 'GET', onReturn, jsonP, logTime } = opt
 
   reqLogger.debug(id, url, plainClone(data))
   const timeStart = Date.now()
-  return wxRequest({url, data, method}, onReturn)
+  return wxRequest({ url, data, method }, onReturn)
     .then((res) => {
       resLogger[logTime ? 'log' : 'debug'](id, `use ${(Date.now() - timeStart) / 1000}s`)
       return res
