@@ -2,7 +2,7 @@ let loggers = {}
 
 class Logger {
   constructor (tag) {
-    this.prefix = `【${tag}】`
+    this.prefix = `{${tag}}`
 
     ;['debug', 'info', 'log', 'warn', 'error'].forEach((name) => {
       this[name] = (...args) => {

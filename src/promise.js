@@ -1,3 +1,5 @@
+import { WxAPIError } from './error'
+
 /**
  * promisify a wx API
  * @param fun wx API function
@@ -9,7 +11,9 @@ export function wxPromisify (fun, thisArg = wx) {
     let _arg = Object.assign({}, arg)
     return new Promise(function (resolve, reject) {
       _arg.success = resolve
-      _arg.fail = reject
+      _arg.fail = (e) => {
+        return reject(new WxAPIError(e.errMsg, e))
+      }
       // _arg.complete = console.log
       try {
         let ret = fun.call(thisArg, _arg)
@@ -17,7 +21,7 @@ export function wxPromisify (fun, thisArg = wx) {
           onReturn(ret)
         }
       } catch (e) {
-        reject(e)
+        reject(new WxAPIError(e.errMsg, e))
       }
     })
   }

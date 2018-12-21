@@ -174,7 +174,7 @@ let loggers = {};
 
 class Logger {
   constructor (tag) {
-    this.prefix = `【${tag}】`
+    this.prefix = `{${tag}}`
 
     ;['debug', 'info', 'log', 'warn', 'error'].forEach((name) => {
       this[name] = (...args) => {
@@ -563,6 +563,36 @@ class ListLoader extends DataLoader {
   }
 }
 
+class ExtendableError extends Error {
+  constructor (message) {
+    super(message);
+    this.name = this.constructor.name;
+    if (typeof Error.captureStackTrace === 'function') {
+      Error.captureStackTrace(this, this.constructor);
+    } else {
+      this.stack = (new Error(message)).stack;
+    }
+  }
+}
+
+class WxAPIError extends ExtendableError {
+  constructor (msg, source) {
+    let idx;
+    const rawErrMsg = msg;
+    // eslint-disable-next-line no-cond-assign
+    if ((idx = msg.indexOf(':fail')) > 0) {
+      msg = msg.slice(idx + 5);
+    // eslint-disable-next-line no-cond-assign
+    } else if ((idx = msg.indexOf(':cancel')) > 0) {
+      msg = msg.slice(idx + 7);
+    }
+    msg = msg.trim();
+    super(msg);
+    this.source = source;
+    this.rawErrMsg = rawErrMsg;
+  }
+}
+
 /**
  * promisify a wx API
  * @param fun wx API function
@@ -574,7 +604,9 @@ function wxPromisify (fun, thisArg = wx) {
     let _arg = Object.assign({}, arg);
     return new Promise(function (resolve, reject) {
       _arg.success = resolve;
-      _arg.fail = reject;
+      _arg.fail = (e) => {
+        return reject(new WxAPIError(e.errMsg, e))
+      };
       // _arg.complete = console.log
       try {
         let ret = fun.call(thisArg, _arg);
@@ -582,7 +614,7 @@ function wxPromisify (fun, thisArg = wx) {
           onReturn(ret);
         }
       } catch (e) {
-        reject(e);
+        reject(new WxAPIError(e.errMsg, e));
       }
     })
   }
